@@ -43,12 +43,44 @@
 #  [1,0] - down
 #  [-1,0] - up
 
+def sense(p, Z, world, pHit):
+    pMiss = 1 - pHit
+    all_q = []
+    for i in range(len(p)):
+      q=[]
+      for j in range(len(p[0])):
+        hit = (Z == world[i][j])
+        q.append(p[i][j] * (hit * pHit + (1-hit) * pMiss))
+      all_q.append(q)
+
+    s = sum([sum(q) for q in all_q])
+    for i in range(len(all_q)):
+      for j in range(len(all_q[0])):
+        all_q[i][j] /= s
+    return all_q
+
+
+def move(p, dy, dx, p_move):
+    all_q = []
+
+    for i in range(len(p)):
+      q = []
+      for j in range(len(p[0])):
+        s = (1 - p_move) * p[i][j]
+        s = s + p_move * p[(i - dy) % len(p)][(j - dx) % len(p[0])]
+        q.append(s)
+      all_q.append(q)
+    return all_q
+
 def localize(colors,measurements,motions,sensor_right,p_move):
     # initializes p to a uniform distribution over a grid of the same dimensions as colors
     pinit = 1.0 / float(len(colors)) / float(len(colors[0]))
     p = [[pinit for row in range(len(colors[0]))] for col in range(len(colors))]
 
     # >>> Insert your code here <<<
+    for motion, measurement in zip(motions, measurements):
+        p = move(p, motion[0], motion[1], p_move)
+        p = sense(p, measurement, colors, sensor_right)
 
     return p
 
@@ -72,3 +104,4 @@ measurements = ['G','G','G','G','G']
 motions = [[0,0],[0,1],[1,0],[1,0],[0,1]]
 p = localize(colors,measurements,motions,sensor_right = 0.7, p_move = 0.8)
 show(p) # displays your answer
+
